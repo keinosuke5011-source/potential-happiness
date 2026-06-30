@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&family=Playfair+Display:wght@400;700&family=Orbitron:wght@400;700&family=Caveat:wght@500;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-default: linear-gradient(145deg, #EEF2FF 0%, #E0E7FF 35%, #DBEAFE 65%, #F0FDF4 100%);
+  --surface: rgba(255,255,255,0.72);
+  --surface-dark: rgba(255,255,255,0.55);
+  --border: rgba(99,102,241,0.13);
+  --border-focus: rgba(99,102,241,0.4);
+  --text-primary: #1E1B4B;
+  --text-secondary: #6366F1;
+  --text-muted: #94A3B8;
+  --accent: #6366F1;
+  --accent2: #8B5CF6;
+  --accent-glow: rgba(99,102,241,0.35);
+  --accent-light: rgba(99,102,241,0.10);
+  --success: #10B981;
+  --danger: #EF4444;
+  --warn: #F59E0B;
+  --shadow: 0 8px 32px rgba(99,102,241,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-lg: 0 20px 60px rgba(99,102,241,0.18), 0 4px 16px rgba(0,0,0,0.08);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --font-ui: 'Inter', system-ui, sans-serif;
+  --font-timer: 'Space Mono', monospace;
+  --trans: 200ms cubic-bezier(0.4,0,0.2,1);
+  --trans-spring: 300ms cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  min-height: 100vh;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  color: var(--text-primary);
+  overflow-x: hidden;
+  transition: background 0.5s ease;
+}
+
+/* ── Background ── */
+#bg-wrap {
+  position: fixed; inset: 0; z-index: 0;
+  background: var(--bg-default);
+  background-size: cover;
+  background-position: center;
+  transition: all 0.5s ease;
+}
+#bg-wrap.has-image::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: rgba(238,242,255,0.45);
+  backdrop-filter: blur(2px);
+}
+
+/* ── App Shell ── */
+#app {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px 48px;
+  gap: 16px;
+}
+
+/* ══════════════════════════════
+   HEADER
+══════════════════════════════ */
+header {
+  width: 100%;
+  max-width: 620px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow);
+}
+.logo {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: 6px;
+}
+.logo-dot {
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: logo-pulse 2.5s ease-in-out infinite;
+}
+@keyframes logo-pulse {
+  0%,100%{ transform:scale(1); box-shadow:0 0 0 0 var(--accent-glow); }
+  50%    { transform:scale(1.3); box-shadow:0 0 0 5px rgba(99,102,241,0); }
+}
+.header-actions { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-light);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--accent);
+  transition: all var(--trans-spring);
+  position: relative;
+  overflow: hidden;
+}
+.icon-btn::after {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(circle at center, rgba(99,102,241,0.35) 0%, transparent 70%);
+  opacity:0; transition: opacity 0.3s;
+}
+.icon-btn:hover { transform: scale(1.15) rotate(-8deg); background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 16px var(--accent-glow); }
+.icon-btn:hover::after { opacity:1; }
+.icon-btn:active { transform: scale(0.92); }
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  background: rgba(99,102,241,0.08);
+  border-radius: 100px;
+  padding: 3px;
+  gap: 2px;
+}
+.tab-btn {
+  background: none; border: none;
+  padding: 7px 18px;
+  font-family: var(--font-ui);
+  font-size: 13px; font-weight: 600;
+  color: var(--text-muted);
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all var(--trans-spring);
+  position: relative;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.tab-btn:hover:not(.active) { color: var(--accent); }
+.tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--accent-glow);
+  transform: scale(1.03);
+}
+
+/* ══════════════════════════════
+   MAIN CARD
+══════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 32px 28px 28px;
+  width: 100%;
+  max-width: 620px;
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+}
+.card:hover { box-shadow: 0 24px 72px rgba(99,102,241,0.16), 0 4px 20px rgba(0,0,0,0.08); }
+
+/* ══════════════════════════════
+   TIMER PRESETS
+══════════════════════════════ */
+.presets {
+  display: flex; gap: 8px;
+  justify-content: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.preset-btn {
+  background: var(--accent-light);
+  border: 1.5px solid rgba(99,102,241,0.2);
+  color: var(--accent);
+  font-family: var(--font-ui);
+  font-size: 12px; font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all var(--trans-spring);
+  letter-spacing: 0.05em;
+  position: relative; overflow: hidden;
+}
+.preset-btn::before {
+  content:''; position:absolute; inset:0;
+  background: var(--accent);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.25s ease;
+  z-index:0;
+}
+.preset-btn span { position: relative; z-index:1; }
+.preset-btn:hover { color:#fff; border-color:var(--accent); box-shadow:0 4px 16px var(--accent-glow); transform:translateY(-3px); }
+.preset-btn:hover::before { transform:scaleX(1); }
+.preset-btn:active { transform:translateY(-1px) scale(0.96); }
+.preset-btn.active-preset { background: var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 4px 16px var(--accent-glow); }
+
+/* ══════════════════════════════
+   PROGRESS RING + DISPLAY
+══════════════════════════════ */
+.ring-wrap {
+  position: relative;
+  width: min(280px, 70vw);
+  height: min(280px, 70vw);
+  margin: 0 auto 8px;
+}
+.progress-ring {
+  position: absolute; inset:0;
+  transform: rotate(-90deg);
+  width:100%; height:100%;
+}
+.ring-track {
+  fill: none;
+  stroke: rgba(99,102,241,0.08);
+  stroke-width: 3;
+}
+.ring-bg-tick {
+  fill:none;
+  stroke: rgba(99,102,241,0.05);
+  stroke-width:1;
+}
+.ring-fill {
+  fill: none;
+  stroke: url(#ringGradient);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear;
+  filter: drop-shadow(0 0 6px rgba(99,102,241,0.5));
+}
+.ring-fill.ending { stroke: url(#ringGradientDanger); filter:drop-shadow(0 0 8px rgba(239,68,68,0.6)); }
+.ring-center {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap: 4px;
+}
+.time-digits {
+  font-family: var(--font-timer);
+  font-size: clamp(52px, 15vw, 80px);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  transition: font-family 0.3s ease, color 0.3s ease, transform 0.3s ease;
+  user-select: none;
+}
+.time-digits.running { animation: breathe 3s ease-in-out infinite; }
+.time-digits.ending { color: var(--danger); animation: urgent 0.7s ease-in-out infinite; }
+@keyframes breathe {
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:0.88; transform:scale(0.99); }
+}
+@keyframes urgent {
+  0%,100%{ opacity:1; }
+  50%    { opacity:0.45; }
+}
+.cs-digits {
+  font-family: var(--font-timer);
+  font-size: clamp(16px,4vw,22px);
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  transition: font-family 0.3s ease;
+}
+.time-label-small {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-secondary); margin-top: 2px;
+}
+
+/* ══════════════════════════════
+   CONTROLS
+══════════════════════════════ */
+.controls {
+  display: flex; gap: 10px;
+  justify-content: center;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+.ctrl-btn {
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-weight: 700; font-size: 13px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 13px 26px;
+  position: relative; overflow: hidden;
+  transition: all var(--trans-spring);
+}
+/* Ripple */
+.ctrl-btn .ripple {
+  position:absolute; border-radius:50%;
+  background: rgba(255,255,255,0.4);
+  transform: scale(0);
+  animation: ripple-anim 0.55s linear;
+  pointer-events:none;
+}
+@keyframes ripple-anim {
+  to{ transform:scale(4); opacity:0; }
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  color: #fff; min-width: 140px;
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+.btn-primary:hover { transform:translateY(-3px) scale(1.03); box-shadow:0 10px 28px var(--accent-glow); }
+.btn-primary:active { transform:translateY(-1px) scale(0.97); }
+.btn-secondary {
+  background: rgba(99,102,241,0.08);
+  border: 1.5px solid var(--border);
+  color: var(--accent);
+}
+.btn-secondary:hover { background:rgba(99,102,241,0.16); transform:translateY(-2px) scale(1.04); box-shadow:0 4px 14px rgba(99,102,241,0.15); }
+.btn-secondary:active { transform:scale(0.95); }
+.btn-danger {
+  background: rgba(239,68,68,0.08);
+  border: 1.5px solid rgba(239,68,68,0.2);
+  color: var(--danger);
+}
+.btn-danger:hover { background:rgba(239,68,68,0.15); transform:translateY(-2px); box-shadow:0 4px 14px rgba(239,68,68,0.2); }
+.btn-danger:active { transform:scale(0.95); }
+.btn-focus {
+  background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+  color: #C7D2FE;
+  border:none;
+}
+.btn-focus:hover { transform:translateY(-3px) scale(1.04); box-shadow:0 8px 24px rgba(30,27,75,0.4); }
+.btn-focus:active { transform:scale(0.95); }
+
+/* ══════════════════════════════
+   FOCUS MODE (全画面)
+══════════════════════════════ */
+#focus-overlay {
+  position: fixed; inset:0; z-index:200;
+  background: #06060F;
+  display: flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap: 16px;
+  opacity:0; pointer-events:none;
+  transition: opacity 0.5s ease;
+}
+#focus-overlay.active { opacity:1; pointer-events:all; }
+.focus-hint {
+  font-size:11px; font-weight:600; letter-spacing:0.2em; text-transform:uppercase;
+  color:rgba(199,210,254,0.3); margin-top:16px;
+}
+.focus-label {
+  font-size:13px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+  color:rgba(199,210,254,0.5);
+}
+#focus-time {
+  font-family: var(--font-timer);
+  font-size: clamp(80px, 22vw, 160px);
+  font-weight:700; letter-spacing:-0.03em; line-height:1;
+  color: #E0E7FF;
+  animation: focus-breathe 4s ease-in-out infinite;
+  text-shadow: 0 0 80px rgba(99,102,241,0.4);
+}
+#focus-time.ending {
+  color:#FCA5A5;
+  text-shadow:0 0 80px rgba(239,68,68,0.5);
+  animation: urgent 0.7s ease-in-out infinite;
+}
+@keyframes focus-breathe {
+  0%,100%{ opacity:1; text-shadow:0 0 60px rgba(99,102,241,0.3); }
+  50%    { opacity:0.85; text-shadow:0 0 100px rgba(99,102,241,0.55); }
+}
+.focus-ring-wrap {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+.focus-ring-svg { width:min(90vmin,600px); height:min(90vmin,600px); transform:rotate(-90deg); }
+.focus-ring-track { fill:none; stroke:rgba(99,102,241,0.05); stroke-width:1.5; }
+.focus-ring-fill { fill:none; stroke:url(#focusGradient); stroke-width:1.5; stroke-linecap:round; transition:stroke-dashoffset 1s linear; filter:drop-shadow(0 0 8px rgba(99,102,241,0.4)); }
+.focus-exit-btn {
+  position:absolute; top:20px; right:20px;
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  color:rgba(255,255,255,0.4); font-family:var(--font-ui); font-size:12px;
+  font-weight:600; letter-spacing:0.1em; padding:8px 16px; border-radius:100px;
+  cursor:pointer; transition:all 0.2s;
+}
+.focus-exit-btn:hover { background:rgba(255,255,255,0.12); color:#fff; }
+.focus-controls { display:flex; gap:12px; z-index:1; }
+.focus-ctrl {
+  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+  color:rgba(255,255,255,0.7); font-family:var(--font-ui); font-size:13px;
+  font-weight:600; padding:11px 24px; border-radius:var(--radius-sm);
+  cursor:pointer; transition:all var(--trans-spring);
+  display:flex; align-items:center; gap:7px;
+}
+.focus-ctrl:hover { background:rgba(255,255,255,0.14); color:#fff; transform:translateY(-2px); }
+.focus-ctrl:active { transform:scale(0.95); }
+.focus-ctrl.primary { background:rgba(99,102,241,0.35); border-color:rgba(99,102,241,0.5); color:#C7D2FE; }
+.focus-ctrl.primary:hover { background:rgba(99,102,241,0.55); box-shadow:0 4px 20px rgba(99,102,241,0.3); }
+
+/* ══════════════════════════════
+   STUDY LOG CARD
+══════════════════════════════ */
+.log-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 20px 24px;
+  width: 100%; max-width: 620px;
+  backdrop-filter: blur(24px);
+  box-shadow: var(--shadow);
+}
+.log-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom: 16px;
+}
+.section-label {
+  font-size:11px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--text-muted);
+  display:flex; align-items:center; gap:7px;
+}
+.section-label::before {
+  content:''; display:block; width:3px; height:14px;
+  background:linear-gradient(180deg,var(--accent),var(--accent2));
+  border-radius:2px;
+}
+.today-time {
+  font-family: var(--font-timer);
+  font-size: 36px; font-weight:700; letter-spacing:-0.02em;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  line-height:1;
+}
+.today-sub { font-size:12px; color:var(--text-muted); margin-top:3px; }
+
+/* ── Graph controls ── */
+.graph-controls { display:flex; gap:6px; margin-bottom:14px; }
+.graph-range-btn {
+  background:none; border:1.5px solid var(--border);
+  color:var(--text-muted); font-family:var(--font-ui); font-size:11px; font-weight:700;
+  padding:5px 13px; border-radius:100px; cursor:pointer; letter-spacing:0.05em;
+  transition:all var(--trans-spring);
+}
+.graph-range-btn:hover { border-color:var(--accent); color:var(--accent); transform:scale(1.06); }
+.graph-range-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 3px 12px var(--accent-glow); }
+.graph-canvas-wrap {
+  width:100%; height:130px; position:relative;
+}
+#log-graph { width:100%; height:100%; display:block; cursor:pointer; }
+.graph-tooltip {
+  position:absolute; background:var(--text-primary); color:#fff;
+  font-size:11px; font-weight:600; padding:5px 10px; border-radius:6px;
+  pointer-events:none; opacity:0; transition:opacity 0.15s; white-space:nowrap;
+  transform:translateX(-50%); margin-top:-4px;
+}
+
+.log-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-top:14px; padding-top:14px;
+  border-top:1px solid var(--border);
+}
+.streak-badge {
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; font-weight:700; color:var(--warn);
+  background:rgba(245,158,11,0.1); padding:5px 12px; border-radius:100px;
+  border:1px solid rgba(245,158,11,0.2);
+  transition: all var(--trans-spring);
+}
+.streak-badge:hover { transform:scale(1.05); }
+.reset-log-btn {
+  background:none; border:none; cursor:pointer;
+  font-size:12px; font-weight:600; color:var(--text-muted);
+  font-family:var(--font-ui); padding:5px 10px; border-radius:6px;
+  transition:all 0.2s; letter-spacing:0.03em;
+}
+.reset-log-btn:hover { color:var(--danger); background:rgba(239,68,68,0.08); transform:scale(1.04); }
+
+/* ══════════════════════════════
+   SETTINGS PANEL (slide-in)
+══════════════════════════════ */
+#settings-panel {
+  position:fixed; top:0; right:0; width:300px; height:100vh; z-index:150;
+  background:rgba(255,255,255,0.92); border-left:1px solid var(--border);
+  backdrop-filter:blur(32px); box-shadow:-8px 0 32px rgba(99,102,241,0.12);
+  padding:24px 20px; overflow-y:auto;
+  transform:translateX(110%); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+#settings-panel.open { transform:translateX(0); }
+.settings-title {
+  font-size:15px; font-weight:700; color:var(--text-primary);
+  margin-bottom:24px; display:flex; align-items:center; justify-content:space-between;
+}
+.settings-close {
+  background:none; border:none; cursor:pointer; color:var(--text-muted);
+  font-size:20px; line-height:1; transition:all 0.2s; padding:2px 6px; border-radius:4px;
+}
+.settings-close:hover { color:var(--danger); transform:rotate(90deg); }
+.settings-section { margin-bottom:24px; }
+.settings-section-title {
+  font-size:10px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase;
+  color:var(--text-muted); margin-bottom:10px;
+  display:flex; align-items:center; gap:6px;
+}
+.settings-section-title::after {
+  content:''; flex:1; height:1px; background:var(--border);
+}
+
+/* Font picker */
+.font-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.font-card {
+  background:var(--accent-light); border:1.5px solid var(--border);
+  border-radius:var(--radius-sm); padding:10px 10px 7px;
+  cursor:pointer; transition:all var(--trans-spring);
+  text-align:center;
+}
+.font-card:hover { border-color:var(--accent); transform:translateY(-2px) scale(1.03); box-shadow:0 4px 14px var(--accent-glow); }
+.font-card.selected { border-color:var(--accent); background:rgba(99,102,241,0.15); box-shadow:0 0 0 2px rgba(99,102,241,0.2); }
+.font-card .font-preview { font-size:20px; font-weight:700; line-height:1.2; color:var(--text-primary); margin-bottom:4px; }
+.font-card .font-name { font-size:9px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); }
+
+/* Size slider */
+.size-slider-wrap { padding:4px 0; }
+.size-slider {
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:4px;
+  background:linear-gradient(90deg,var(--accent) var(--progress,50%),rgba(99,102,241,0.15) var(--progress,50%));
+  border-radius:4px; cursor:pointer; outline:none;
+  transition:background 0.2s;
+}
+.size-slider::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:18px; height:18px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,0.2);
+  transition:all 0.2s; cursor:pointer;
+}
+.size-slider::-webkit-slider-thumb:hover { transform:scale(1.25); box-shadow:0 0 0 5px rgba(99,102,241,0.2); }
+.size-label { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:6px; }
+
+/* Bg section */
+.bg-upload-btn {
+  width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
+  background:var(--accent-light); border:1.5px dashed rgba(99,102,241,0.3);
+  border-radius:var(--radius-sm); padding:14px;
+  color:var(--accent); font-family:var(--font-ui); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all var(--trans-spring);
+  letter-spacing:0.03em;
+}
+.bg-upload-btn:hover { background:rgba(99,102,241,0.15); border-color:var(--accent); transform:scale(1.02); }
+.bg-preview {
+  margin-top:10px; width:100%; height:72px; border-radius:var(--radius-sm);
+  background-size:cover; background-position:center;
+  border:1px solid var(--border); display:none;
+  position:relative; overflow:hidden;
+}
+.bg-preview.has-img { display:block; }
+.bg-clear-btn {
+  position:absolute; top:6px; right:6px;
+  background:rgba(0,0,0,0.55); border:none; color:#fff; border-radius:50%;
+  width:22px; height:22px; cursor:pointer; font-size:12px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s;
+}
+.bg-clear-btn:hover { background:rgba(239,68,68,0.8); transform:scale(1.15); }
+
+/* ══════════════════════════════
+   PANEL VISIBILITY
+══════════════════════════════ */
+.panel { display:none; }
+.panel.active { display:block; }
+
+/* ══════════════════════════════
+   TOAST
+══════════════════════════════ */
+#toast {
+  position:fixed; bottom:28px; left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:var(--text-primary); color:#EEF2FF;
+  font-size:13px; font-weight:600; padding:12px 22px;
+  border-radius:100px; box-shadow:0 8px 28px rgba(0,0,0,0.2);
+  opacity:0; pointer-events:none; z-index:300;
+  transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  white-space:nowrap;
+  display:flex; align-items:center; gap:8px;
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ══════════════════════════════
+   SETTINGS OVERLAY
+══════════════════════════════ */
+#settings-overlay {
+  position:fixed; inset:0; z-index:140;
+  background:rgba(6,6,15,0.2); backdrop-filter:blur(2px);
+  opacity:0; pointer-events:none; transition:opacity 0.3s;
+}
+#settings-overlay.active { opacity:1; pointer-events:all; }
+
+/* ══════════════════════════════
+   RESPONSIVE
+══════════════════════════════ */
+@media(max-width:480px){
+  .card { padding:24px 18px 22px; border-radius:18px; }
+  .controls { gap:8px; }
+  .ctrl-btn { padding:12px 18px; font-size:12px; }
+  .btn-primary { min-width:120px; }
+}
+</style>
+</head>
+<body>
+
+<!-- SVG Gradients (hidden defs) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="ringGradientDanger" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="focusGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div id="bg-wrap"></div>
+
+<div id="app">
+
+  <!-- ═══ Header ═══ -->
+  <header>
+    <span class="logo"><span class="logo-dot"></span>Focus</span>
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-timer-btn" onclick="switchTab('timer')">タイマー</button>
+      <button class="tab-btn" id="tab-sw-btn" onclick="switchTab('stopwatch')">ストップウォッチ</button>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" title="設定" onclick="openSettings()">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+          <path d="M10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.7"/>
+          <path d="M16.2 12.3a1.4 1.4 0 0 0 .28 1.54l.05.05a1.7 1.7 0 1 1-2.4 2.4l-.05-.05a1.4 1.4 0 0 0-1.54-.28 1.4 1.4 0 0 0-.85 1.28v.14a1.7 1.7 0 0 1-3.4 0v-.07a1.4 1.4 0 0 0-.92-1.28 1.4 1.4 0 0 0-1.54.28l-.05.05a1.7 1.7 0 1 1-2.4-2.4l.05-.05a1.4 1.4 0 0 0 .28-1.54 1.4 1.4 0 0 0-1.28-.85h-.14a1.7 1.7 0 0 1 0-3.4h.07a1.4 1.4 0 0 0 1.28-.92 1.4 1.4 0 0 0-.28-1.54l-.05-.05a1.7 1.7 0 1 1 2.4-2.4l.05.05a1.4 1.4 0 0 0 1.54.28h.07a1.4 1.4 0 0 0 .85-1.28v-.14a1.7 1.7 0 0 1 3.4 0v.07a1.4 1.4 0 0 0 .85 1.28 1.4 1.4 0 0 0 1.54-.28l.05-.05a1.7 1.7 0 1 1 2.4 2.4l-.05.05a1.4 1.4 0 0 0-.28 1.54v.07a1.4 1.4 0 0 0 1.28.85h.14a1.7 1.7 0 0 1 0 3.4h-.07a1.4 1.4 0 0 0-1.28.85Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══ Timer Panel ═══ -->
+  <div class="card panel active" id="panel-timer">
+    <div class="presets" id="preset-group">
+      <button class="preset-btn active-preset" onclick="setPreset(25*60,this)"><span>🍅 25分（ポモドーロ）</span></button>
+      <button class="preset-btn" onclick="setPreset(5*60,this)"><span>☕ 5分（休憩）</span></button>
+      <button class="preset-btn" onclick="setPreset(15*60,this)"><span>🌿 15分</span></button>
+    </div>
+
+    <div class="ring-wrap">
+      <svg class="progress-ring" viewBox="0 0 280 280">
+        <circle class="ring-track" cx="140" cy="140" r="128"/>
+        <circle class="ring-fill" id="ring-fill" cx="140" cy="140" r="128"/>
+      </svg>
+      <div class="ring-center">
+        <span class="time-digits" id="timer-digits">25:00</span>
+        <span class="time-label-small" id="timer-label">集中モード</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn btn-secondary" onclick="timerReset(event)">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 12V8h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        リセット
+      </button>
+      <button class="ctrl-btn btn-primary" id="timer-toggle" onclick="timerToggle(event)">
+        <svg width="12" height="13" viewBox="0 0 12 14" fill="currentColor" id="timer-icon"><path d="M1 1l10 6L1 13V1z"/></svg>
+        スタート
+      </button>
+      <button class="ctrl-btn btn-focus" onclick="enterFocusMode(event)">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 8V5a2 2 0 0 1 2-2h3M17 8V5a2 2 0 0 0-2-2h-3M3 12v3a2 2 0 0 0 2 2h3M17 12v3a2 2 0 0 1-2 2h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        集中モード
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ Stopwatch Panel ═══ -->
+  <div class="card panel" id="panel-stopwatch">
+    <div class="ring-wrap" style="margin-top:18px">
+      <svg class="progress-ring" viewBox="0 0 280 280">
+        <circle class="ring-track" cx="140" cy="140" r="128"/>
+      </svg>
+      <div class="ring-center">
+        <span class="time-digits" id="sw-digits">00:00</span>
+        <span class="cs-digits" id="sw-cs">.00</span>
+        <span class="time-label-small">経過時間</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn btn-secondary" onclick="swReset(event)">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 12V8h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        リセット
+      </button>
+      <button class="ctrl-btn btn-primary" id="sw-toggle" onclick="swToggle(event)">
+        <svg width="12" height="13" viewBox="0 0 12 14" fill="currentColor" id="sw-icon"><path d="M1 1l10 6L1 13V1z"/></svg>
+        スタート
+      </button>
+      <button class="ctrl-btn btn-focus" onclick="enterFocusMode(event)">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 8V5a2 2 0 0 1 2-2h3M17 8V5a2 2 0 0 0-2-2h-3M3 12v3a2 2 0 0 0 2 2h3M17 12v3a2 2 0 0 1-2 2h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        集中モード
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ Study Log ═══ -->
+  <div class="log-card">
+    <div class="log-header">
+      <span class="section-label">学習記録</span>
+      <div style="text-align:right">
+        <div class="today-time" id="log-today">0:00:00</div>
+        <div class="today-sub">本日の学習時間</div>
+      </div>
+    </div>
+
+    <div class="graph-controls">
+      <button class="graph-range-btn active" onclick="setGraphRange(7,this)">7日間</button>
+      <button class="graph-range-btn" onclick="setGraphRange(14,this)">14日間</button>
+      <button class="graph-range-btn" onclick="setGraphRange(30,this)">30日間</button>
+    </div>
+    <div class="graph-canvas-wrap">
+      <canvas id="log-graph"></canvas>
+      <div class="graph-tooltip" id="graph-tooltip"></div>
+    </div>
+
+    <div class="log-footer">
+      <div class="streak-badge" id="streak-badge">🔥 0日連続</div>
+      <button class="reset-log-btn" onclick="resetStudyLog()">記録をリセット</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ Settings Panel ═══ -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-panel">
+  <div class="settings-title">
+    設定
+    <button class="settings-close" onclick="closeSettings()">×</button>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">数字のフォント</div>
+    <div class="font-grid" id="font-grid">
+      <div class="font-card selected" data-font="'Space Mono', monospace" onclick="selectFont(this)">
+        <div class="font-preview" style="font-family:'Space Mono',monospace">25:00</div>
+        <div class="font-name">Mono</div>
+      </div>
+      <div class="font-card" data-font="'Orbitron', sans-serif" onclick="selectFont(this)">
+        <div class="font-preview" style="font-family:'Orbitron',sans-serif">25:00</div>
+        <div class="font-name">Digital</div>
+      </div>
+      <div class="font-card" data-font="'Playfair Display', serif" onclick="selectFont(this)">
+        <div class="font-preview" style="font-family:'Playfair Display',serif">25:00</div>
+        <div class="font-name">Serif</div>
+      </div>
+      <div class="font-card" data-font="'DM Sans', sans-serif" onclick="selectFont(this)">
+        <div class="font-preview" style="font-family:'DM Sans',sans-serif;font-weight:300">25:00</div>
+        <div class="font-name">Sans</div>
+      </div>
+      <div class="font-card" data-font="'Caveat', cursive" onclick="selectFont(this)">
+        <div class="font-preview" style="font-family:'Caveat',cursive;font-weight:700">25:00</div>
+        <div class="font-name">Hand</div>
+      </div>
+      <div class="font-card" data-font="'Courier New', monospace" onclick="selectFont(this)">
+        <div class="font-preview" style="font-family:'Courier New',monospace">25:00</div>
+        <div class="font-name">Classic</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">数字のサイズ</div>
+    <div class="size-slider-wrap">
+      <input type="range" min="60" max="160" value="100" class="size-slider" id="size-slider" oninput="updateSize(this.value)">
+      <div class="size-label"><span>小</span><span id="size-value">100%</span><span>大</span></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">背景画像</div>
+    <button class="bg-upload-btn" onclick="document.getElementById('bg-file-input').click()">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M1 11l4-4 3 3 2-2 4 3" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      画像を選択
+    </button>
+    <input type="file" id="bg-file-input" accept="image/*" style="display:none" onchange="loadBgImage(event)">
+    <div class="bg-preview" id="bg-preview">
+      <button class="bg-clear-btn" onclick="clearBg(event)">×</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ Focus Mode Overlay ═══ -->
+<div id="focus-overlay">
+  <div class="focus-ring-wrap">
+    <svg class="focus-ring-svg" viewBox="0 0 280 280">
+      <circle class="focus-ring-track" cx="140" cy="140" r="135"/>
+      <circle class="focus-ring-fill" id="focus-ring-fill" cx="140" cy="140" r="135"/>
+    </svg>
+  </div>
+  <span class="focus-label" id="focus-label">集中モード</span>
+  <span id="focus-time">25:00</span>
+  <div class="focus-controls">
+    <button class="focus-ctrl" onclick="focusResetCurrent()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 12V8h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      リセット
+    </button>
+    <button class="focus-ctrl primary" id="focus-toggle" onclick="focusToggleCurrent()">
+      <svg width="11" height="12" viewBox="0 0 12 14" fill="currentColor" id="focus-toggle-icon"><rect x="1" y="1" width="4" height="12" rx="1"/><rect x="7" y="1" width="4" height="12" rx="1"/></svg>
+      一時停止
+    </button>
+  </div>
+  <button class="focus-exit-btn" onclick="exitFocusMode()">ESC で終了</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════
+   Utility
+════════════════════════════════ */
+const $ = id => document.getElementById(id);
+function fmt2(n){ return String(Math.floor(n)).padStart(2,'0'); }
+function formatHMS(totalSec){
+  totalSec = Math.max(0, Math.round(totalSec));
+  const h = Math.floor(totalSec/3600);
+  const m = Math.floor((totalSec%3600)/60);
+  const s = totalSec%60;
+  return `${h}:${fmt2(m)}:${fmt2(s)}`;
+}
+function formatMS(totalSec){
+  totalSec = Math.max(0, Math.round(totalSec));
+  const m = Math.floor(totalSec/60);
+  const s = totalSec%60;
+  return `${m}分${fmt2(s)}秒`;
+}
+function showToast(msg, ms=2800){
+  const t = $('toast');
+  t.innerHTML = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._tid);
+  showToast._tid = setTimeout(()=> t.classList.remove('show'), ms);
+}
+function addRipple(btn, evt){
+  try{
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    ripple.style.width = ripple.style.height = size+'px';
+    const x = (evt.clientX ?? rect.left+rect.width/2) - rect.left - size/2;
+    const y = (evt.clientY ?? rect.top+rect.height/2) - rect.top - size/2;
+    ripple.style.left = x+'px'; ripple.style.top = y+'px';
+    btn.appendChild(ripple);
+    setTimeout(()=> ripple.remove(), 560);
+  }catch(e){}
+}
+
+/* ════════════════════════════════
+   Web Audio Alarm
+════════════════════════════════ */
+function playAlarm(){
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [0,0.35,0.70,1.05].forEach(t=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type='sine'; osc.frequency.value=880;
+      gain.gain.setValueAtTime(0, ctx.currentTime+t);
+      gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime+t+0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+t+0.32);
+      osc.start(ctx.currentTime+t); osc.stop(ctx.currentTime+t+0.35);
+    });
+  }catch(e){}
+}
+
+/* ════════════════════════════════
+   Study Log (localStorage, per-day)
+════════════════════════════════ */
+const LOG_KEY = 'focus_study_log_v2';
+
+function dateKey(d){ return d.toISOString().slice(0,10); }
+function todayKey(){ return dateKey(new Date()); }
+
+function loadLog(){
+  try{ return JSON.parse(localStorage.getItem(LOG_KEY) || '{}'); }
+  catch{ return {}; }
+}
+function saveLog(data){
+  try{ localStorage.setItem(LOG_KEY, JSON.stringify(data)); }catch(e){}
+}
+function addStudySeconds(sec){
+  if(sec<=0) return;
+  const data = loadLog();
+  const k = todayKey();
+  data[k] = (data[k]||0) + sec;
+  saveLog(data);
+  renderLogToday();
+  renderGraph();
+  renderStreak();
+}
+function resetStudyLog(){
+  if(!confirm('すべての学習記録をリセットしますか？この操作は元に戻せません。')) return;
+  saveLog({});
+  renderLogToday();
+  renderGraph();
+  renderStreak();
+  showToast('🗑️ 学習記録をリセットしました');
+}
+function renderLogToday(){
+  const data = loadLog();
+  $('log-today').textContent = formatHMS(data[todayKey()]||0);
+}
+function renderStreak(){
+  const data = loadLog();
+  let streak = 0;
+  let d = new Date();
+  // 今日記録がなければ昨日から数える(今日は0でも連続記録は守る)
+  if(!data[dateKey(d)]){
+    d.setDate(d.getDate()-1);
+  }
+  while(data[dateKey(d)] > 0){
+    streak++;
+    d.setDate(d.getDate()-1);
+  }
+  $('streak-badge').innerHTML = `🔥 ${streak}日連続`;
+}
+
+/* ════════════════════════════════
+   Graph (Canvas)
+════════════════════════════════ */
+let graphRange = 7;
+function setGraphRange(n, btn){
+  graphRange = n;
+  document.querySelectorAll('.graph-range-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGraph();
+}
+
+function renderGraph(){
+  const canvas = $('log-graph');
+  const wrap = canvas.parentElement;
+  const dpr = window.devicePixelRatio || 1;
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  canvas.style.width = w+'px'; canvas.style.height = h+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+
+  const data = loadLog();
+  const days = [];
+  const now = new Date();
+  for(let i=graphRange-1;i>=0;i--){
+    const d = new Date(now);
+    d.setDate(d.getDate()-i);
+    days.push({ key: dateKey(d), date:d, sec: data[dateKey(d)]||0 });
+  }
+
+  const maxSec = Math.max(...days.map(d=>d.sec), 60); // min scale 1 min
+  const padTop = 8, padBottom = 22, padLeft = 4, padRight = 4;
+  const chartH = h - padTop - padBottom;
+  const chartW = w - padLeft - padRight;
+  const barGap = graphRange > 14 ? 2 : 6;
+  const barW = (chartW / days.length) - barGap;
+
+  canvas._bars = [];
+
+  days.forEach((d, i)=>{
+    const x = padLeft + i*(barW+barGap);
+    const barH = Math.max(2, (d.sec / maxSec) * chartH);
+    const y = padTop + (chartH - barH);
+
+    const grad = ctx.createLinearGradient(0,y,0,y+barH);
+    const isToday = d.key === todayKey();
+    if(isToday){
+      grad.addColorStop(0,'#8B5CF6'); grad.addColorStop(1,'#6366F1');
+    } else if(d.sec>0){
+      grad.addColorStop(0,'rgba(99,102,241,0.55)'); grad.addColorStop(1,'rgba(99,102,241,0.35)');
+    } else {
+      grad.addColorStop(0,'rgba(99,102,241,0.08)'); grad.addColorStop(1,'rgba(99,102,241,0.08)');
+    }
+    ctx.fillStyle = grad;
+    const r = Math.min(4, barW/2);
+    roundRect(ctx, x, y, Math.max(barW,2), barH, r);
+    ctx.fill();
+
+    // label (only if room)
+    if(graphRange<=14 || i%Math.ceil(graphRange/10)===0){
+      ctx.fillStyle = isToday ? '#6366F1' : 'rgba(148,163,184,0.8)';
+      ctx.font = `${isToday?'700':'500'} 9px Inter, sans-serif`;
+      ctx.textAlign = 'center';
+      const label = graphRange<=14
+        ? ['日','月','火','水','木','金','土'][d.date.getDay()]
+        : `${d.date.getMonth()+1}/${d.date.getDate()}`;
+      ctx.fillText(label, x+barW/2, h-7);
+    }
+
+    canvas._bars.push({x,y:padTop,w:Math.max(barW,2),h:chartH,sec:d.sec,date:d.date});
+  });
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+// tooltip interaction
+(function initGraphTooltip(){
+  const canvas = $('log-graph');
+  const tip = $('graph-tooltip');
+  canvas.addEventListener('mousemove', e=>{
+    if(!canvas._bars) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX-rect.left;
+    const bar = canvas._bars.find(b=> mx>=b.x && mx<=b.x+b.w);
+    if(bar){
+      tip.style.opacity=1;
+      tip.style.left = (bar.x+bar.w/2)+'px';
+      tip.style.bottom = (rect.height-bar.y+8)+'px';
+      const dlabel = `${bar.date.getMonth()+1}/${bar.date.getDate()}`;
+      tip.textContent = `${dlabel}: ${formatMS(bar.sec)}`;
+    } else {
+      tip.style.opacity=0;
+    }
+  });
+  canvas.addEventListener('mouseleave', ()=> tip.style.opacity=0);
+  window.addEventListener('resize', ()=> renderGraph());
+})();
+
+/* ════════════════════════════════
+   Tab switching
+════════════════════════════════ */
+function switchTab(tab){
+  $('tab-timer-btn').classList.toggle('active', tab==='timer');
+  $('tab-sw-btn').classList.toggle('active', tab==='stopwatch');
+  $('panel-timer').classList.toggle('active', tab==='timer');
+  $('panel-stopwatch').classList.toggle('active', tab==='stopwatch');
+}
+
+/* ════════════════════════════════
+   Progress Ring helpers
+════════════════════════════════ */
+const RING_R = 128, RING_C = 2*Math.PI*RING_R;
+function setRingProgress(ratio){
+  const fill = $('ring-fill');
+  fill.style.strokeDasharray = RING_C;
+  fill.style.strokeDashoffset = RING_C*(1-Math.max(0,Math.min(1,ratio)));
+}
+const FOCUS_RING_R = 135, FOCUS_RING_C = 2*Math.PI*FOCUS_RING_R;
+function setFocusRingProgress(ratio){
+  const fill = $('focus-ring-fill');
+  fill.style.strokeDasharray = FOCUS_RING_C;
+  fill.style.strokeDashoffset = FOCUS_RING_C*(1-Math.max(0,Math.min(1,ratio)));
+}
+
+/* ════════════════════════════════
+   TIMER (countdown)
+════════════════════════════════ */
+let timerTotal = 25*60, timerLeft = 25*60, timerRunning=false, timerInterval=null;
+
+function setPreset(sec, btn){
+  if(timerRunning) timerPause();
+  timerTotal = sec; timerLeft = sec;
+  renderTimer();
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active-preset'));
+  if(btn) btn.classList.add('active-preset');
+  const labels = {[25*60]:'集中モード',[5*60]:'休憩モード',[15*60]:'長めの休憩'};
+  $('timer-label').textContent = labels[sec] || 'タイマー';
+}
+
+function renderTimer(){
+  const m=Math.floor(timerLeft/60), s=timerLeft%60;
+  $('timer-digits').textContent = `${fmt2(m)}:${fmt2(s)}`;
+  setRingProgress(timerLeft/timerTotal);
+  const digits=$('timer-digits'), ring=$('ring-fill');
+  const warn = timerLeft<=60 && timerRunning && timerLeft>0;
+  digits.classList.toggle('ending', warn);
+  ring.classList.toggle('ending', warn);
+  digits.classList.toggle('running', timerRunning && !warn);
+
+  if(focusActive && focusMode==='timer'){
+    $('focus-time').textContent = `${fmt2(m)}:${fmt2(s)}`;
+    setFocusRingProgress(timerLeft/timerTotal);
+    $('focus-time').classList.toggle('ending', warn);
+    $('focus-ring-fill').classList.toggle('ending', warn);
+  }
+}
+
+function timerToggle(evt){ addRipple(evt.currentTarget, evt); timerRunning ? timerPause() : timerStart(); }
+function timerStart(){
+  if(timerLeft<=0) return;
+  timerRunning=true; updateTimerBtn();
+  timerInterval = setInterval(()=>{
+    timerLeft--;
+    renderTimer();
+    if(timerLeft<=0){
+      clearInterval(timerInterval);
+      timerRunning=false;
+      addStudySeconds(timerTotal);
+      playAlarm();
+      showToast('⏰ タイマー終了！お疲れさまでした', 4200);
+      if(focusActive) showFocusToast('⏰ タイマー終了！');
+      renderTimer(); updateTimerBtn();
+    }
+  },1000);
+}
+function timerPause(){ clearInterval(timerInterval); timerRunning=false; renderTimer(); updateTimerBtn(); }
+function timerReset(evt){ if(evt) addRipple(evt.currentTarget, evt); clearInterval(timerInterval); timerRunning=false; timerLeft=timerTotal; renderTimer(); updateTimerBtn(); }
+function updateTimerBtn(){
+  const btn=$('timer-toggle');
+  btn.innerHTML = timerRunning
+    ? `<svg width="12" height="13" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg> 一時停止`
+    : `<svg width="12" height="13" viewBox="0 0 12 14" fill="currentColor"><path d="M1 1l10 6L1 13V1z"/></svg> スタート`;
+  if(focusActive && focusMode==='timer') syncFocusBtn();
+}
+
+/* ════════════════════════════════
+   STOPWATCH (count-up)
+════════════════════════════════ */
+let swRunning=false, swInterval=null, swMs=0, swLapMs=0;
+
+function renderSW(){
+  const total=Math.floor(swMs/1000);
+  const m=Math.floor(total/60), s=total%60, cs=Math.floor((swMs%1000)/10);
+  $('sw-digits').textContent = `${fmt2(m)}:${fmt2(s)}`;
+  $('sw-cs').textContent = `.${fmt2(cs)}`;
+  $('sw-digits').classList.toggle('running', swRunning);
+
+  if(focusActive && focusMode==='stopwatch'){
+    $('focus-time').textContent = `${fmt2(m)}:${fmt2(s)}`;
+  }
+}
+function swToggle(evt){ addRipple(evt.currentTarget, evt); swRunning ? swStop() : swStart(); }
+function swStart(){
+  swRunning=true; swLapMs=swMs;
+  const startTime = Date.now()-swMs;
+  swInterval = setInterval(()=>{ swMs=Date.now()-startTime; renderSW(); }, 30);
+  updateSWBtn();
+}
+function swStop(){
+  clearInterval(swInterval); swRunning=false;
+  const elapsed = Math.floor((swMs-swLapMs)/1000);
+  if(elapsed>0){ addStudySeconds(elapsed); showToast(`✅ +${formatMS(elapsed)} を記録しました`); }
+  renderSW(); updateSWBtn();
+}
+function swReset(evt){
+  if(evt) addRipple(evt.currentTarget, evt);
+  if(swRunning){ clearInterval(swInterval); swRunning=false; }
+  swMs=0; renderSW(); updateSWBtn();
+}
+function updateSWBtn(){
+  const btn=$('sw-toggle');
+  btn.innerHTML = swRunning
+    ? `<svg width="12" height="13" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg> ストップ`
+    : `<svg width="12" height="13" viewBox="0 0 12 14" fill="currentColor"><path d="M1 1l10 6L1 13V1z"/></svg> スタート`;
+  if(focusActive && focusMode==='stopwatch') syncFocusBtn();
+}
+
+/* ════════════════════════════════
+   FOCUS MODE
+════════════════════════════════ */
+let focusActive=false, focusMode='timer'; // 'timer' | 'stopwatch'
+
+function enterFocusMode(evt){
+  addRipple(evt.currentTarget, evt);
+  focusMode = $('panel-timer').classList.contains('active') ? 'timer' : 'stopwatch';
+  focusActive = true;
+  $('focus-overlay').classList.add('active');
+  $('focus-label').textContent = focusMode==='timer' ? '集中モード · タイマー' : '集中モード · ストップウォッチ';
+  document.querySelector('.focus-ring-wrap').style.display = focusMode==='timer' ? 'flex' : 'none';
+  if(focusMode==='timer'){ renderTimer(); } else { renderSW(); }
+  syncFocusBtn();
+  document.body.style.overflow='hidden';
+}
+function exitFocusMode(){
+  focusActive=false;
+  $('focus-overlay').classList.remove('active');
+  document.body.style.overflow='';
+}
+function focusToggleCurrent(){
+  if(focusMode==='timer') timerRunning? timerPause():timerStart();
+  else swRunning? swStop():swStart();
+}
+function focusResetCurrent(){
+  if(focusMode==='timer') timerReset(); else swReset();
+}
+function syncFocusBtn(){
+  const btn=$('focus-toggle');
+  const running = focusMode==='timer' ? timerRunning : swRunning;
+  btn.innerHTML = running
+    ? `<svg width="11" height="12" viewBox="0 0 12 14" fill="currentColor"><rect x="1" y="1" width="4" height="12" rx="1"/><rect x="7" y="1" width="4" height="12" rx="1"/></svg> 一時停止`
+    : `<svg width="11" height="12" viewBox="0 0 12 14" fill="currentColor"><path d="M1 1l10 6L1 13V1z"/></svg> スタート`;
+}
+function showFocusToast(msg){
+  // simple flash using focus-label
+  const lbl = $('focus-label');
+  const orig = lbl.textContent;
+  lbl.textContent = msg;
+  setTimeout(()=> lbl.textContent = orig, 2500);
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && focusActive) exitFocusMode();
+});
+
+/* ════════════════════════════════
+   Settings Panel
+════════════════════════════════ */
+function openSettings(){ $('settings-panel').classList.add('open'); $('settings-overlay').classList.add('active'); }
+function closeSettings(){ $('settings-panel').classList.remove('open'); $('settings-overlay').classList.remove('active'); }
+
+/* Font selection */
+const FONT_KEY = 'focus_font';
+function selectFont(card){
+  document.querySelectorAll('.font-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  const font = card.dataset.font;
+  applyFont(font);
+  try{ localStorage.setItem(FONT_KEY, font); }catch(e){}
+}
+function applyFont(font){
+  document.documentElement.style.setProperty('--font-timer', font);
+}
+function initFont(){
+  try{
+    const saved = localStorage.getItem(FONT_KEY);
+    if(saved){
+      applyFont(saved);
+      document.querySelectorAll('.font-card').forEach(c=>{
+        c.classList.toggle('selected', c.dataset.font===saved);
+      });
+    }
+  }catch(e){}
+}
+
+/* Size slider */
+const SIZE_KEY = 'focus_digit_size';
+function updateSize(val){
+  $('size-value').textContent = val+'%';
+  document.documentElement.style.setProperty('--digit-scale', val/100);
+  document.querySelectorAll('.time-digits').forEach(el=>{
+    el.style.transform = `scale(${val/100})`;
+  });
+  $('size-slider').style.setProperty('--progress', ((val-60)/(160-60)*100)+'%');
+  try{ localStorage.setItem(SIZE_KEY, val); }catch(e){}
+}
+function initSize(){
+  try{
+    const saved = localStorage.getItem(SIZE_KEY);
+    if(saved){ $('size-slider').value=saved; updateSize(saved); }
+    else { updateSize(100); }
+  }catch(e){ updateSize(100); }
+}
+
+/* Background image */
+const BG_KEY = 'focus_bg_image';
+function loadBgImage(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 6*1024*1024){
+    showToast('⚠️ 画像サイズが大きすぎます（6MB以下を推奨）');
+  }
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    const data = ev.target.result;
+    applyBg(data);
+    try{ localStorage.setItem(BG_KEY, data); showToast('🖼️ 背景画像を設定しました'); }
+    catch(err){ showToast('⚠️ 画像が大きすぎて保存できません（表示のみ）'); }
+  };
+  reader.readAsDataURL(file);
+}
+function applyBg(dataUrl){
+  const wrap = $('bg-wrap');
+  wrap.style.backgroundImage = `url(${dataUrl})`;
+  wrap.classList.add('has-image');
+  const prev = $('bg-preview');
+  prev.style.backgroundImage = `url(${dataUrl})`;
+  prev.classList.add('has-img');
+}
+function clearBg(evt){
+  evt.stopPropagation();
+  const wrap = $('bg-wrap');
+  wrap.style.backgroundImage = '';
+  wrap.classList.remove('has-image');
+  $('bg-preview').classList.remove('has-img');
+  $('bg-preview').style.backgroundImage = '';
+  try{ localStorage.removeItem(BG_KEY); }catch(e){}
+  showToast('背景をデフォルトに戻しました');
+}
+function initBg(){
+  try{
+    const saved = localStorage.getItem(BG_KEY);
+    if(saved) applyBg(saved);
+  }catch(e){}
+}
+
+/* ════════════════════════════════
+   Boot
+════════════════════════════════ */
+setRingProgress(1);
+renderTimer();
+renderSW();
+renderLogToday();
+renderGraph();
+renderStreak();
+initFont();
+initSize();
+initBg();
+
+</script>
+</body>
+</html>
