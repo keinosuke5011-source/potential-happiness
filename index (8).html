@@ -236,7 +236,9 @@ header {
   stroke: url(#ringGradient);
   stroke-width: 3;
   stroke-linecap: round;
-  transition: stroke-dashoffset 1s linear;
+  stroke-dasharray: 804.24; /* 2 * PI * 128 */
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.3s linear;
   filter: drop-shadow(0 0 6px rgba(99,102,241,0.5));
 }
 .ring-fill.ending { stroke: url(#ringGradientDanger); filter:drop-shadow(0 0 8px rgba(239,68,68,0.6)); }
@@ -259,8 +261,8 @@ header {
 .time-digits.running { animation: breathe 3s ease-in-out infinite; }
 .time-digits.ending { color: var(--danger); animation: urgent 0.7s ease-in-out infinite; }
 @keyframes breathe {
-  0%,100%{ opacity:1; transform:scale(1); }
-  50%    { opacity:0.88; transform:scale(0.99); }
+  0%,100%{ transform:scale(1); opacity:1; }
+  50%    { transform:scale(0.98); opacity:0.9; }
 }
 @keyframes urgent {
   0%,100%{ opacity:1; }
@@ -300,17 +302,6 @@ header {
   padding: 13px 26px;
   position: relative; overflow: hidden;
   transition: all var(--trans-spring);
-}
-/* Ripple */
-.ctrl-btn .ripple {
-  position:absolute; border-radius:50%;
-  background: rgba(255,255,255,0.4);
-  transform: scale(0);
-  animation: ripple-anim 0.55s linear;
-  pointer-events:none;
-}
-@keyframes ripple-anim {
-  to{ transform:scale(4); opacity:0; }
 }
 .btn-primary {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
@@ -370,14 +361,9 @@ header {
   animation: focus-breathe 4s ease-in-out infinite;
   text-shadow: 0 0 80px rgba(99,102,241,0.4);
 }
-#focus-time.ending {
-  color:#FCA5A5;
-  text-shadow:0 0 80px rgba(239,68,68,0.5);
-  animation: urgent 0.7s ease-in-out infinite;
-}
 @keyframes focus-breathe {
-  0%,100%{ opacity:1; text-shadow:0 0 60px rgba(99,102,241,0.3); }
-  50%    { opacity:0.85; text-shadow:0 0 100px rgba(99,102,241,0.55); }
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%    { opacity:0.85; transform:scale(0.97); }
 }
 .focus-ring-wrap {
   position:absolute; inset:0;
@@ -386,7 +372,7 @@ header {
 }
 .focus-ring-svg { width:min(90vmin,600px); height:min(90vmin,600px); transform:rotate(-90deg); }
 .focus-ring-track { fill:none; stroke:rgba(99,102,241,0.05); stroke-width:1.5; }
-.focus-ring-fill { fill:none; stroke:url(#focusGradient); stroke-width:1.5; stroke-linecap:round; transition:stroke-dashoffset 1s linear; filter:drop-shadow(0 0 8px rgba(99,102,241,0.4)); }
+.focus-ring-fill { fill:none; stroke:url(#focusGradient); stroke-width:1.5; stroke-linecap:round; stroke-dasharray: 848.23; stroke-dashoffset: 0; transition:stroke-dashoffset 0.3s linear; filter:drop-shadow(0 0 8px rgba(99,102,241,0.4)); }
 .focus-exit-btn {
   position:absolute; top:20px; right:20px;
   background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
@@ -406,7 +392,6 @@ header {
 .focus-ctrl:hover { background:rgba(255,255,255,0.14); color:#fff; transform:translateY(-2px); }
 .focus-ctrl:active { transform:scale(0.95); }
 .focus-ctrl.primary { background:rgba(99,102,241,0.35); border-color:rgba(99,102,241,0.5); color:#C7D2FE; }
-.focus-ctrl.primary:hover { background:rgba(99,102,241,0.55); box-shadow:0 4px 20px rgba(99,102,241,0.3); }
 
 /* ══════════════════════════════
    STUDY LOG CARD
@@ -456,13 +441,7 @@ header {
 .graph-canvas-wrap {
   width:100%; height:130px; position:relative;
 }
-#log-graph { width:100%; height:100%; display:block; cursor:pointer; }
-.graph-tooltip {
-  position:absolute; background:var(--text-primary); color:#fff;
-  font-size:11px; font-weight:600; padding:5px 10px; border-radius:6px;
-  pointer-events:none; opacity:0; transition:opacity 0.15s; white-space:nowrap;
-  transform:translateX(-50%); margin-top:-4px;
-}
+#log-graph { width:100%; height:100%; display:block; }
 
 .log-footer {
   display:flex; align-items:center; justify-content:space-between;
@@ -533,9 +512,8 @@ header {
 .size-slider {
   -webkit-appearance:none; appearance:none;
   width:100%; height:4px;
-  background:linear-gradient(90deg,var(--accent) var(--progress,50%),rgba(99,102,241,0.15) var(--progress,50%));
+  background:rgba(99,102,241,0.15);
   border-radius:4px; cursor:pointer; outline:none;
-  transition:background 0.2s;
 }
 .size-slider::-webkit-slider-thumb {
   -webkit-appearance:none; appearance:none;
@@ -543,7 +521,6 @@ header {
   background:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,0.2);
   transition:all 0.2s; cursor:pointer;
 }
-.size-slider::-webkit-slider-thumb:hover { transform:scale(1.25); box-shadow:0 0 0 5px rgba(99,102,241,0.2); }
 .size-label { display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:6px; }
 
 /* Bg section */
@@ -568,35 +545,13 @@ header {
   background:rgba(0,0,0,0.55); border:none; color:#fff; border-radius:50%;
   width:22px; height:22px; cursor:pointer; font-size:12px;
   display:flex; align-items:center; justify-content:center;
-  transition:all 0.2s;
 }
-.bg-clear-btn:hover { background:rgba(239,68,68,0.8); transform:scale(1.15); }
 
-/* ══════════════════════════════
-   PANEL VISIBILITY
-══════════════════════════════ */
+/* ── Panel Visibility ── */
 .panel { display:none; }
 .panel.active { display:block; }
 
-/* ══════════════════════════════
-   TOAST
-══════════════════════════════ */
-#toast {
-  position:fixed; bottom:28px; left:50%;
-  transform:translateX(-50%) translateY(20px);
-  background:var(--text-primary); color:#EEF2FF;
-  font-size:13px; font-weight:600; padding:12px 22px;
-  border-radius:100px; box-shadow:0 8px 28px rgba(0,0,0,0.2);
-  opacity:0; pointer-events:none; z-index:300;
-  transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1);
-  white-space:nowrap;
-  display:flex; align-items:center; gap:8px;
-}
-#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
-/* ══════════════════════════════
-   SETTINGS OVERLAY
-══════════════════════════════ */
+/* ── Settings Overlay ── */
 #settings-overlay {
   position:fixed; inset:0; z-index:140;
   background:rgba(6,6,15,0.2); backdrop-filter:blur(2px);
@@ -604,9 +559,6 @@ header {
 }
 #settings-overlay.active { opacity:1; pointer-events:all; }
 
-/* ══════════════════════════════
-   RESPONSIVE
-══════════════════════════════ */
 @media(max-width:480px){
   .card { padding:24px 18px 22px; border-radius:18px; }
   .controls { gap:8px; }
@@ -617,7 +569,6 @@ header {
 </head>
 <body>
 
-<!-- SVG Gradients (hidden defs) -->
 <svg width="0" height="0" style="position:absolute">
   <defs>
     <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -639,7 +590,6 @@ header {
 
 <div id="app">
 
-  <!-- ═══ Header ═══ -->
   <header>
     <span class="logo"><span class="logo-dot"></span>Focus</span>
     <div class="tabs">
@@ -656,7 +606,6 @@ header {
     </div>
   </header>
 
-  <!-- ═══ Timer Panel ═══ -->
   <div class="card panel active" id="panel-timer">
     <div class="presets" id="preset-group">
       <button class="preset-btn active-preset" onclick="setPreset(25*60,this)"><span>🍅 25分（ポモドーロ）</span></button>
@@ -676,22 +625,19 @@ header {
     </div>
 
     <div class="controls">
-      <button class="ctrl-btn btn-secondary" onclick="timerReset(event)">
+      <button class="ctrl-btn btn-secondary" onclick="timerReset()">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 12V8h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         リセット
       </button>
-      <button class="ctrl-btn btn-primary" id="timer-toggle" onclick="timerToggle(event)">
-        <svg width="12" height="13" viewBox="0 0 12 14" fill="currentColor" id="timer-icon"><path d="M1 1l10 6L1 13V1z"/></svg>
+      <button class="ctrl-btn btn-primary" id="timer-toggle" onclick="timerToggle()">
         スタート
       </button>
-      <button class="ctrl-btn btn-focus" onclick="enterFocusMode(event)">
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 8V5a2 2 0 0 1 2-2h3M17 8V5a2 2 0 0 0-2-2h-3M3 12v3a2 2 0 0 0 2 2h3M17 12v3a2 2 0 0 1-2 2h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button class="ctrl-btn btn-focus" onclick="enterFocusMode()">
         集中モード
       </button>
     </div>
   </div>
 
-  <!-- ═══ Stopwatch Panel ═══ -->
   <div class="card panel" id="panel-stopwatch">
     <div class="ring-wrap" style="margin-top:18px">
       <svg class="progress-ring" viewBox="0 0 280 280">
@@ -705,22 +651,18 @@ header {
     </div>
 
     <div class="controls">
-      <button class="ctrl-btn btn-secondary" onclick="swReset(event)">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 12V8h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button class="ctrl-btn btn-secondary" onclick="swReset()">
         リセット
       </button>
-      <button class="ctrl-btn btn-primary" id="sw-toggle" onclick="swToggle(event)">
-        <svg width="12" height="13" viewBox="0 0 12 14" fill="currentColor" id="sw-icon"><path d="M1 1l10 6L1 13V1z"/></svg>
+      <button class="ctrl-btn btn-primary" id="sw-toggle" onclick="swToggle()">
         スタート
       </button>
-      <button class="ctrl-btn btn-focus" onclick="enterFocusMode(event)">
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M3 8V5a2 2 0 0 1 2-2h3M17 8V5a2 2 0 0 0-2-2h-3M3 12v3a2 2 0 0 0 2 2h3M17 12v3a2 2 0 0 1-2 2h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button class="ctrl-btn btn-focus" onclick="enterFocusMode()">
         集中モード
       </button>
     </div>
   </div>
 
-  <!-- ═══ Study Log ═══ -->
   <div class="log-card">
     <div class="log-header">
       <span class="section-label">学習記録</span>
@@ -737,18 +679,16 @@ header {
     </div>
     <div class="graph-canvas-wrap">
       <canvas id="log-graph"></canvas>
-      <div class="graph-tooltip" id="graph-tooltip"></div>
     </div>
 
     <div class="log-footer">
-      <div class="streak-badge" id="streak-badge">🔥 0日連続</div>
+      <div class="streak-badge" id="streak-badge">🔥 1日連続</div>
       <button class="reset-log-btn" onclick="resetStudyLog()">記録をリセット</button>
     </div>
   </div>
 
 </div>
 
-<!-- ═══ Settings Panel ═══ -->
 <div id="settings-overlay" onclick="closeSettings()"></div>
 <div id="settings-panel">
   <div class="settings-title">
@@ -772,16 +712,8 @@ header {
         <div class="font-name">Serif</div>
       </div>
       <div class="font-card" data-font="'DM Sans', sans-serif" onclick="selectFont(this)">
-        <div class="font-preview" style="font-family:'DM Sans',sans-serif;font-weight:300">25:00</div>
+        <div class="font-preview" style="font-family:'DM Sans',sans-serif">25:00</div>
         <div class="font-name">Sans</div>
-      </div>
-      <div class="font-card" data-font="'Caveat', cursive" onclick="selectFont(this)">
-        <div class="font-preview" style="font-family:'Caveat',cursive;font-weight:700">25:00</div>
-        <div class="font-name">Hand</div>
-      </div>
-      <div class="font-card" data-font="'Courier New', monospace" onclick="selectFont(this)">
-        <div class="font-preview" style="font-family:'Courier New',monospace">25:00</div>
-        <div class="font-name">Classic</div>
       </div>
     </div>
   </div>
@@ -789,7 +721,7 @@ header {
   <div class="settings-section">
     <div class="settings-section-title">数字のサイズ</div>
     <div class="size-slider-wrap">
-      <input type="range" min="60" max="160" value="100" class="size-slider" id="size-slider" oninput="updateSize(this.value)">
+      <input type="range" min="60" max="140" value="100" class="size-slider" id="size-slider" oninput="updateSize(this.value)">
       <div class="size-label"><span>小</span><span id="size-value">100%</span><span>大</span></div>
     </div>
   </div>
@@ -797,7 +729,6 @@ header {
   <div class="settings-section">
     <div class="settings-section-title">背景画像</div>
     <button class="bg-upload-btn" onclick="document.getElementById('bg-file-input').click()">
-      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="5.5" cy="6.5" r="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M1 11l4-4 3 3 2-2 4 3" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
       画像を選択
     </button>
     <input type="file" id="bg-file-input" accept="image/*" style="display:none" onchange="loadBgImage(event)">
@@ -805,11 +736,10 @@ header {
       <button class="bg-clear-btn" onclick="clearBg(event)">×</button>
     </div>
   </div>
-
 </div>
 
-<!-- ═══ Focus Mode Overlay ═══ -->
 <div id="focus-overlay">
+  <button class="focus-exit-btn" onclick="exitFocusMode()">終了</button>
   <div class="focus-ring-wrap">
     <svg class="focus-ring-svg" viewBox="0 0 280 280">
       <circle class="focus-ring-track" cx="140" cy="140" r="135"/>
@@ -819,517 +749,283 @@ header {
   <span class="focus-label" id="focus-label">集中モード</span>
   <span id="focus-time">25:00</span>
   <div class="focus-controls">
-    <button class="focus-ctrl" onclick="focusResetCurrent()">
-      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 1 1 1.5 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 12V8h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      リセット
-    </button>
-    <button class="focus-ctrl primary" id="focus-toggle" onclick="focusToggleCurrent()">
-      <svg width="11" height="12" viewBox="0 0 12 14" fill="currentColor" id="focus-toggle-icon"><rect x="1" y="1" width="4" height="12" rx="1"/><rect x="7" y="1" width="4" height="12" rx="1"/></svg>
-      一時停止
-    </button>
+    <button class="focus-ctrl" id="focus-reset-btn">リセット</button>
+    <button class="focus-ctrl primary" id="focus-toggle-btn">一時停止</button>
   </div>
-  <button class="focus-exit-btn" onclick="exitFocusMode()">ESC で終了</button>
 </div>
 
-<div id="toast"></div>
-
 <script>
-/* ════════════════════════════════
-   Utility
-════════════════════════════════ */
-const $ = id => document.getElementById(id);
-function fmt2(n){ return String(Math.floor(n)).padStart(2,'0'); }
-function formatHMS(totalSec){
-  totalSec = Math.max(0, Math.round(totalSec));
-  const h = Math.floor(totalSec/3600);
-  const m = Math.floor((totalSec%3600)/60);
-  const s = totalSec%60;
-  return `${h}:${fmt2(m)}:${fmt2(s)}`;
-}
-function formatMS(totalSec){
-  totalSec = Math.max(0, Math.round(totalSec));
-  const m = Math.floor(totalSec/60);
-  const s = totalSec%60;
-  return `${m}分${fmt2(s)}秒`;
-}
-function showToast(msg, ms=2800){
-  const t = $('toast');
-  t.innerHTML = msg;
-  t.classList.add('show');
-  clearTimeout(showToast._tid);
-  showToast._tid = setTimeout(()=> t.classList.remove('show'), ms);
-}
-function addRipple(btn, evt){
-  try{
-    const rect = btn.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const ripple = document.createElement('span');
-    ripple.className = 'ripple';
-    ripple.style.width = ripple.style.height = size+'px';
-    const x = (evt.clientX ?? rect.left+rect.width/2) - rect.left - size/2;
-    const y = (evt.clientY ?? rect.top+rect.height/2) - rect.top - size/2;
-    ripple.style.left = x+'px'; ripple.style.top = y+'px';
-    btn.appendChild(ripple);
-    setTimeout(()=> ripple.remove(), 560);
-  }catch(e){}
-}
+// アプリの状態
+let activeTab = 'timer';
+let timerDuration = 25 * 60;
+let timerRemaining = 25 * 60;
+let timerId = null;
 
-/* ════════════════════════════════
-   Web Audio Alarm
-════════════════════════════════ */
-function playAlarm(){
-  try{
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    [0,0.35,0.70,1.05].forEach(t=>{
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type='sine'; osc.frequency.value=880;
-      gain.gain.setValueAtTime(0, ctx.currentTime+t);
-      gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime+t+0.04);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+t+0.32);
-      osc.start(ctx.currentTime+t); osc.stop(ctx.currentTime+t+0.35);
-    });
-  }catch(e){}
-}
+let swTime = 0; 
+let swId = null;
 
-/* ════════════════════════════════
-   Study Log (localStorage, per-day)
-════════════════════════════════ */
-const LOG_KEY = 'focus_study_log_v2';
+let totalStudyTime = 0; 
+let graphDays = 7;
 
-function dateKey(d){ return d.toISOString().slice(0,10); }
-function todayKey(){ return dateKey(new Date()); }
-
-function loadLog(){
-  try{ return JSON.parse(localStorage.getItem(LOG_KEY) || '{}'); }
-  catch{ return {}; }
-}
-function saveLog(data){
-  try{ localStorage.setItem(LOG_KEY, JSON.stringify(data)); }catch(e){}
-}
-function addStudySeconds(sec){
-  if(sec<=0) return;
-  const data = loadLog();
-  const k = todayKey();
-  data[k] = (data[k]||0) + sec;
-  saveLog(data);
-  renderLogToday();
-  renderGraph();
-  renderStreak();
-}
-function resetStudyLog(){
-  if(!confirm('すべての学習記録をリセットしますか？この操作は元に戻せません。')) return;
-  saveLog({});
-  renderLogToday();
-  renderGraph();
-  renderStreak();
-  showToast('🗑️ 学習記録をリセットしました');
-}
-function renderLogToday(){
-  const data = loadLog();
-  $('log-today').textContent = formatHMS(data[todayKey()]||0);
-}
-function renderStreak(){
-  const data = loadLog();
-  let streak = 0;
-  let d = new Date();
-  // 今日記録がなければ昨日から数える(今日は0でも連続記録は守る)
-  if(!data[dateKey(d)]){
-    d.setDate(d.getDate()-1);
+// タブ切り替え
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  
+  if(tab === 'timer') {
+    document.getElementById('tab-timer-btn').classList.add('active');
+    document.getElementById('panel-timer').classList.add('active');
+  } else {
+    document.getElementById('tab-sw-btn').classList.add('active');
+    document.getElementById('panel-stopwatch').classList.add('active');
   }
-  while(data[dateKey(d)] > 0){
-    streak++;
-    d.setDate(d.getDate()-1);
-  }
-  $('streak-badge').innerHTML = `🔥 ${streak}日連続`;
 }
 
-/* ════════════════════════════════
-   Graph (Canvas)
-════════════════════════════════ */
-let graphRange = 7;
-function setGraphRange(n, btn){
-  graphRange = n;
-  document.querySelectorAll('.graph-range-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderGraph();
+// タイマー機能
+function updateTimerDisplay() {
+  const mins = Math.floor(timerRemaining / 60).toString().padStart(2, '0');
+  const secs = (timerRemaining % 60).toString().padStart(2, '0');
+  const txt = `${mins}:${secs}`;
+  document.getElementById('timer-digits').innerText = txt;
+  document.getElementById('focus-time').innerText = txt;
+  
+  // リングの進捗
+  const ring = document.getElementById('ring-fill');
+  const fRing = document.getElementById('focus-ring-fill');
+  const totalOffset = 804.24;
+  const focusTotalOffset = 848.23;
+  
+  const pct = timerRemaining / timerDuration;
+  ring.style.strokeDashoffset = totalOffset * (1 - pct);
+  fRing.style.strokeDashoffset = focusTotalOffset * (1 - pct);
 }
 
-function renderGraph(){
-  const canvas = $('log-graph');
-  const wrap = canvas.parentElement;
-  const dpr = window.devicePixelRatio || 1;
-  const w = wrap.clientWidth, h = wrap.clientHeight;
-  canvas.width = w*dpr; canvas.height = h*dpr;
-  canvas.style.width = w+'px'; canvas.style.height = h+'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,w,h);
-
-  const data = loadLog();
-  const days = [];
-  const now = new Date();
-  for(let i=graphRange-1;i>=0;i--){
-    const d = new Date(now);
-    d.setDate(d.getDate()-i);
-    days.push({ key: dateKey(d), date:d, sec: data[dateKey(d)]||0 });
-  }
-
-  const maxSec = Math.max(...days.map(d=>d.sec), 60); // min scale 1 min
-  const padTop = 8, padBottom = 22, padLeft = 4, padRight = 4;
-  const chartH = h - padTop - padBottom;
-  const chartW = w - padLeft - padRight;
-  const barGap = graphRange > 14 ? 2 : 6;
-  const barW = (chartW / days.length) - barGap;
-
-  canvas._bars = [];
-
-  days.forEach((d, i)=>{
-    const x = padLeft + i*(barW+barGap);
-    const barH = Math.max(2, (d.sec / maxSec) * chartH);
-    const y = padTop + (chartH - barH);
-
-    const grad = ctx.createLinearGradient(0,y,0,y+barH);
-    const isToday = d.key === todayKey();
-    if(isToday){
-      grad.addColorStop(0,'#8B5CF6'); grad.addColorStop(1,'#6366F1');
-    } else if(d.sec>0){
-      grad.addColorStop(0,'rgba(99,102,241,0.55)'); grad.addColorStop(1,'rgba(99,102,241,0.35)');
-    } else {
-      grad.addColorStop(0,'rgba(99,102,241,0.08)'); grad.addColorStop(1,'rgba(99,102,241,0.08)');
-    }
-    ctx.fillStyle = grad;
-    const r = Math.min(4, barW/2);
-    roundRect(ctx, x, y, Math.max(barW,2), barH, r);
-    ctx.fill();
-
-    // label (only if room)
-    if(graphRange<=14 || i%Math.ceil(graphRange/10)===0){
-      ctx.fillStyle = isToday ? '#6366F1' : 'rgba(148,163,184,0.8)';
-      ctx.font = `${isToday?'700':'500'} 9px Inter, sans-serif`;
-      ctx.textAlign = 'center';
-      const label = graphRange<=14
-        ? ['日','月','火','水','木','金','土'][d.date.getDay()]
-        : `${d.date.getMonth()+1}/${d.date.getDate()}`;
-      ctx.fillText(label, x+barW/2, h-7);
-    }
-
-    canvas._bars.push({x,y:padTop,w:Math.max(barW,2),h:chartH,sec:d.sec,date:d.date});
-  });
-}
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  ctx.closePath();
-}
-
-// tooltip interaction
-(function initGraphTooltip(){
-  const canvas = $('log-graph');
-  const tip = $('graph-tooltip');
-  canvas.addEventListener('mousemove', e=>{
-    if(!canvas._bars) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX-rect.left;
-    const bar = canvas._bars.find(b=> mx>=b.x && mx<=b.x+b.w);
-    if(bar){
-      tip.style.opacity=1;
-      tip.style.left = (bar.x+bar.w/2)+'px';
-      tip.style.bottom = (rect.height-bar.y+8)+'px';
-      const dlabel = `${bar.date.getMonth()+1}/${bar.date.getDate()}`;
-      tip.textContent = `${dlabel}: ${formatMS(bar.sec)}`;
-    } else {
-      tip.style.opacity=0;
-    }
-  });
-  canvas.addEventListener('mouseleave', ()=> tip.style.opacity=0);
-  window.addEventListener('resize', ()=> renderGraph());
-})();
-
-/* ════════════════════════════════
-   Tab switching
-════════════════════════════════ */
-function switchTab(tab){
-  $('tab-timer-btn').classList.toggle('active', tab==='timer');
-  $('tab-sw-btn').classList.toggle('active', tab==='stopwatch');
-  $('panel-timer').classList.toggle('active', tab==='timer');
-  $('panel-stopwatch').classList.toggle('active', tab==='stopwatch');
-}
-
-/* ════════════════════════════════
-   Progress Ring helpers
-════════════════════════════════ */
-const RING_R = 128, RING_C = 2*Math.PI*RING_R;
-function setRingProgress(ratio){
-  const fill = $('ring-fill');
-  fill.style.strokeDasharray = RING_C;
-  fill.style.strokeDashoffset = RING_C*(1-Math.max(0,Math.min(1,ratio)));
-}
-const FOCUS_RING_R = 135, FOCUS_RING_C = 2*Math.PI*FOCUS_RING_R;
-function setFocusRingProgress(ratio){
-  const fill = $('focus-ring-fill');
-  fill.style.strokeDasharray = FOCUS_RING_C;
-  fill.style.strokeDashoffset = FOCUS_RING_C*(1-Math.max(0,Math.min(1,ratio)));
-}
-
-/* ════════════════════════════════
-   TIMER (countdown)
-════════════════════════════════ */
-let timerTotal = 25*60, timerLeft = 25*60, timerRunning=false, timerInterval=null;
-
-function setPreset(sec, btn){
-  if(timerRunning) timerPause();
-  timerTotal = sec; timerLeft = sec;
-  renderTimer();
-  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active-preset'));
+function setPreset(seconds, btn) {
+  if(timerId) timerToggle();
+  timerDuration = seconds;
+  timerRemaining = seconds;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active-preset'));
   if(btn) btn.classList.add('active-preset');
-  const labels = {[25*60]:'集中モード',[5*60]:'休憩モード',[15*60]:'長めの休憩'};
-  $('timer-label').textContent = labels[sec] || 'タイマー';
+  updateTimerDisplay();
 }
 
-function renderTimer(){
-  const m=Math.floor(timerLeft/60), s=timerLeft%60;
-  $('timer-digits').textContent = `${fmt2(m)}:${fmt2(s)}`;
-  setRingProgress(timerLeft/timerTotal);
-  const digits=$('timer-digits'), ring=$('ring-fill');
-  const warn = timerLeft<=60 && timerRunning && timerLeft>0;
-  digits.classList.toggle('ending', warn);
-  ring.classList.toggle('ending', warn);
-  digits.classList.toggle('running', timerRunning && !warn);
-
-  if(focusActive && focusMode==='timer'){
-    $('focus-time').textContent = `${fmt2(m)}:${fmt2(s)}`;
-    setFocusRingProgress(timerLeft/timerTotal);
-    $('focus-time').classList.toggle('ending', warn);
-    $('focus-ring-fill').classList.toggle('ending', warn);
+function timerToggle() {
+  const btn = document.getElementById('timer-toggle');
+  const fBtn = document.getElementById('focus-toggle-btn');
+  if(timerId) {
+    clearInterval(timerId);
+    timerId = null;
+    btn.innerText = 'スタート';
+    fBtn.innerText = '再開';
+    document.getElementById('timer-digits').classList.remove('running');
+  } else {
+    btn.innerText = '一時停止';
+    fBtn.innerText = '一時停止';
+    document.getElementById('timer-digits').classList.add('running');
+    timerId = setInterval(() => {
+      if(timerRemaining > 0) {
+        timerRemaining--;
+        totalStudyTime++;
+        updateStudyLog();
+        updateTimerDisplay();
+      } else {
+        clearInterval(timerId);
+        timerId = null;
+        btn.innerText = 'スタート';
+        alert('時間になりました！お疲れ様です！');
+      }
+    }, 1000);
   }
 }
 
-function timerToggle(evt){ addRipple(evt.currentTarget, evt); timerRunning ? timerPause() : timerStart(); }
-function timerStart(){
-  if(timerLeft<=0) return;
-  timerRunning=true; updateTimerBtn();
-  timerInterval = setInterval(()=>{
-    timerLeft--;
-    renderTimer();
-    if(timerLeft<=0){
-      clearInterval(timerInterval);
-      timerRunning=false;
-      addStudySeconds(timerTotal);
-      playAlarm();
-      showToast('⏰ タイマー終了！お疲れさまでした', 4200);
-      if(focusActive) showFocusToast('⏰ タイマー終了！');
-      renderTimer(); updateTimerBtn();
-    }
-  },1000);
-}
-function timerPause(){ clearInterval(timerInterval); timerRunning=false; renderTimer(); updateTimerBtn(); }
-function timerReset(evt){ if(evt) addRipple(evt.currentTarget, evt); clearInterval(timerInterval); timerRunning=false; timerLeft=timerTotal; renderTimer(); updateTimerBtn(); }
-function updateTimerBtn(){
-  const btn=$('timer-toggle');
-  btn.innerHTML = timerRunning
-    ? `<svg width="12" height="13" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg> 一時停止`
-    : `<svg width="12" height="13" viewBox="0 0 12 14" fill="currentColor"><path d="M1 1l10 6L1 13V1z"/></svg> スタート`;
-  if(focusActive && focusMode==='timer') syncFocusBtn();
+function timerReset() {
+  if(timerId) timerToggle();
+  timerRemaining = timerDuration;
+  updateTimerDisplay();
 }
 
-/* ════════════════════════════════
-   STOPWATCH (count-up)
-════════════════════════════════ */
-let swRunning=false, swInterval=null, swMs=0, swLapMs=0;
+// ストップウォッチ機能
+function updateSwDisplay() {
+  const mins = Math.floor(swTime / 6000).toString().padStart(2, '0');
+  const secs = Math.floor((swTime % 6000) / 100).toString().padStart(2, '0');
+  const cs = (swTime % 100).toString().padStart(2, '0');
+  document.getElementById('sw-digits').innerText = `${mins}:${secs}`;
+  document.getElementById('sw-cs').innerText = `.${cs}`;
+}
 
-function renderSW(){
-  const total=Math.floor(swMs/1000);
-  const m=Math.floor(total/60), s=total%60, cs=Math.floor((swMs%1000)/10);
-  $('sw-digits').textContent = `${fmt2(m)}:${fmt2(s)}`;
-  $('sw-cs').textContent = `.${fmt2(cs)}`;
-  $('sw-digits').classList.toggle('running', swRunning);
-
-  if(focusActive && focusMode==='stopwatch'){
-    $('focus-time').textContent = `${fmt2(m)}:${fmt2(s)}`;
+function swToggle() {
+  const btn = document.getElementById('sw-toggle');
+  if(swId) {
+    clearInterval(swId);
+    swId = null;
+    btn.innerText = 'スタート';
+  } else {
+    btn.innerText = '一時停止';
+    swId = setInterval(() => {
+      swTime++;
+      if(swTime % 100 === 0) {
+        totalStudyTime++;
+        updateStudyLog();
+      }
+      updateSwDisplay();
+    }, 10);
   }
 }
-function swToggle(evt){ addRipple(evt.currentTarget, evt); swRunning ? swStop() : swStart(); }
-function swStart(){
-  swRunning=true; swLapMs=swMs;
-  const startTime = Date.now()-swMs;
-  swInterval = setInterval(()=>{ swMs=Date.now()-startTime; renderSW(); }, 30);
-  updateSWBtn();
-}
-function swStop(){
-  clearInterval(swInterval); swRunning=false;
-  const elapsed = Math.floor((swMs-swLapMs)/1000);
-  if(elapsed>0){ addStudySeconds(elapsed); showToast(`✅ +${formatMS(elapsed)} を記録しました`); }
-  renderSW(); updateSWBtn();
-}
-function swReset(evt){
-  if(evt) addRipple(evt.currentTarget, evt);
-  if(swRunning){ clearInterval(swInterval); swRunning=false; }
-  swMs=0; renderSW(); updateSWBtn();
-}
-function updateSWBtn(){
-  const btn=$('sw-toggle');
-  btn.innerHTML = swRunning
-    ? `<svg width="12" height="13" viewBox="0 0 14 14" fill="currentColor"><rect x="2" y="1" width="3.5" height="12" rx="1"/><rect x="8.5" y="1" width="3.5" height="12" rx="1"/></svg> ストップ`
-    : `<svg width="12" height="13" viewBox="0 0 12 14" fill="currentColor"><path d="M1 1l10 6L1 13V1z"/></svg> スタート`;
-  if(focusActive && focusMode==='stopwatch') syncFocusBtn();
+
+function swReset() {
+  if(swId) swToggle();
+  swTime = 0;
+  updateSwDisplay();
 }
 
-/* ════════════════════════════════
-   FOCUS MODE
-════════════════════════════════ */
-let focusActive=false, focusMode='timer'; // 'timer' | 'stopwatch'
+// 集中モード
+function enterFocusMode() {
+  document.getElementById('focus-overlay').classList.add('active');
+  document.getElementById('focus-label').innerText = activeTab === 'timer' ? '集中タイマー' : '経過時間';
+  
+  // 連動設定
+  document.getElementById('focus-toggle-btn').onclick = () => {
+    if(activeTab === 'timer') timerToggle(); else swToggle();
+    document.getElementById('focus-toggle-btn').innerText = (timerId || swId) ? '一時停止' : '再開';
+  };
+  document.getElementById('focus-reset-btn').onclick = () => {
+    if(activeTab === 'timer') timerReset(); else swReset();
+  };
+  document.getElementById('focus-toggle-btn').innerText = (timerId || swId) ? '一時停止' : '再開';
+}
 
-function enterFocusMode(evt){
-  addRipple(evt.currentTarget, evt);
-  focusMode = $('panel-timer').classList.contains('active') ? 'timer' : 'stopwatch';
-  focusActive = true;
-  $('focus-overlay').classList.add('active');
-  $('focus-label').textContent = focusMode==='timer' ? '集中モード · タイマー' : '集中モード · ストップウォッチ';
-  document.querySelector('.focus-ring-wrap').style.display = focusMode==='timer' ? 'flex' : 'none';
-  if(focusMode==='timer'){ renderTimer(); } else { renderSW(); }
-  syncFocusBtn();
-  document.body.style.overflow='hidden';
+function exitFocusMode() {
+  document.getElementById('focus-overlay').classList.remove('active');
 }
-function exitFocusMode(){
-  focusActive=false;
-  $('focus-overlay').classList.remove('active');
-  document.body.style.overflow='';
-}
-function focusToggleCurrent(){
-  if(focusMode==='timer') timerRunning? timerPause():timerStart();
-  else swRunning? swStop():swStart();
-}
-function focusResetCurrent(){
-  if(focusMode==='timer') timerReset(); else swReset();
-}
-function syncFocusBtn(){
-  const btn=$('focus-toggle');
-  const running = focusMode==='timer' ? timerRunning : swRunning;
-  btn.innerHTML = running
-    ? `<svg width="11" height="12" viewBox="0 0 12 14" fill="currentColor"><rect x="1" y="1" width="4" height="12" rx="1"/><rect x="7" y="1" width="4" height="12" rx="1"/></svg> 一時停止`
-    : `<svg width="11" height="12" viewBox="0 0 12 14" fill="currentColor"><path d="M1 1l10 6L1 13V1z"/></svg> スタート`;
-}
-function showFocusToast(msg){
-  // simple flash using focus-label
-  const lbl = $('focus-label');
-  const orig = lbl.textContent;
-  lbl.textContent = msg;
-  setTimeout(()=> lbl.textContent = orig, 2500);
-}
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape' && focusActive) exitFocusMode();
-});
 
-/* ════════════════════════════════
-   Settings Panel
-════════════════════════════════ */
-function openSettings(){ $('settings-panel').classList.add('open'); $('settings-overlay').classList.add('active'); }
-function closeSettings(){ $('settings-panel').classList.remove('open'); $('settings-overlay').classList.remove('active'); }
+// 設定機能
+function openSettings() {
+  document.getElementById('settings-panel').classList.add('open');
+  document.getElementById('settings-overlay').classList.add('active');
+}
+function closeSettings() {
+  document.getElementById('settings-panel').classList.remove('open');
+  document.getElementById('settings-overlay').classList.remove('active');
+}
 
-/* Font selection */
-const FONT_KEY = 'focus_font';
-function selectFont(card){
-  document.querySelectorAll('.font-card').forEach(c=>c.classList.remove('selected'));
+function selectFont(card) {
+  document.querySelectorAll('.font-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
-  const font = card.dataset.font;
-  applyFont(font);
-  try{ localStorage.setItem(FONT_KEY, font); }catch(e){}
-}
-function applyFont(font){
+  const font = card.getAttribute('data-font');
   document.documentElement.style.setProperty('--font-timer', font);
 }
-function initFont(){
-  try{
-    const saved = localStorage.getItem(FONT_KEY);
-    if(saved){
-      applyFont(saved);
-      document.querySelectorAll('.font-card').forEach(c=>{
-        c.classList.toggle('selected', c.dataset.font===saved);
-      });
-    }
-  }catch(e){}
+
+function updateSize(val) {
+  document.getElementById('size-value').innerText = val + '%';
+  document.getElementById('timer-digits').style.transform = `scale(${val/100})`;
+  document.getElementById('sw-digits').style.transform = `scale(${val/100})`;
 }
 
-/* Size slider */
-const SIZE_KEY = 'focus_digit_size';
-function updateSize(val){
-  $('size-value').textContent = val+'%';
-  document.documentElement.style.setProperty('--digit-scale', val/100);
-  document.querySelectorAll('.time-digits').forEach(el=>{
-    el.style.transform = `scale(${val/100})`;
-  });
-  $('size-slider').style.setProperty('--progress', ((val-60)/(160-60)*100)+'%');
-  try{ localStorage.setItem(SIZE_KEY, val); }catch(e){}
-}
-function initSize(){
-  try{
-    const saved = localStorage.getItem(SIZE_KEY);
-    if(saved){ $('size-slider').value=saved; updateSize(saved); }
-    else { updateSize(100); }
-  }catch(e){ updateSize(100); }
-}
-
-/* Background image */
-const BG_KEY = 'focus_bg_image';
-function loadBgImage(e){
+function loadBgImage(e) {
   const file = e.target.files[0];
-  if(!file) return;
-  if(file.size > 6*1024*1024){
-    showToast('⚠️ 画像サイズが大きすぎます（6MB以下を推奨）');
+  if(file) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const url = event.target.result;
+      document.getElementById('bg-wrap').style.backgroundImage = `url(${url})`;
+      document.getElementById('bg-wrap').classList.add('has-image');
+      document.getElementById('bg-preview').style.backgroundImage = `url(${url})`;
+      document.getElementById('bg-preview').classList.add('has-img');
+    };
+    reader.readAsDataURL(file);
   }
-  const reader = new FileReader();
-  reader.onload = ev=>{
-    const data = ev.target.result;
-    applyBg(data);
-    try{ localStorage.setItem(BG_KEY, data); showToast('🖼️ 背景画像を設定しました'); }
-    catch(err){ showToast('⚠️ 画像が大きすぎて保存できません（表示のみ）'); }
-  };
-  reader.readAsDataURL(file);
-}
-function applyBg(dataUrl){
-  const wrap = $('bg-wrap');
-  wrap.style.backgroundImage = `url(${dataUrl})`;
-  wrap.classList.add('has-image');
-  const prev = $('bg-preview');
-  prev.style.backgroundImage = `url(${dataUrl})`;
-  prev.classList.add('has-img');
-}
-function clearBg(evt){
-  evt.stopPropagation();
-  const wrap = $('bg-wrap');
-  wrap.style.backgroundImage = '';
-  wrap.classList.remove('has-image');
-  $('bg-preview').classList.remove('has-img');
-  $('bg-preview').style.backgroundImage = '';
-  try{ localStorage.removeItem(BG_KEY); }catch(e){}
-  showToast('背景をデフォルトに戻しました');
-}
-function initBg(){
-  try{
-    const saved = localStorage.getItem(BG_KEY);
-    if(saved) applyBg(saved);
-  }catch(e){}
 }
 
-/* ════════════════════════════════
-   Boot
-════════════════════════════════ */
-setRingProgress(1);
-renderTimer();
-renderSW();
-renderLogToday();
-renderGraph();
-renderStreak();
-initFont();
-initSize();
-initBg();
+function clearBg(e) {
+  e.stopPropagation();
+  document.getElementById('bg-wrap').style.backgroundImage = '';
+  document.getElementById('bg-wrap').classList.remove('has-image');
+  document.getElementById('bg-preview').style.backgroundImage = '';
+  document.getElementById('bg-preview').classList.remove('has-img');
+  document.getElementById('bg-file-input').value = '';
+}
 
+// 学習記録・グラフ機能
+function updateStudyLog() {
+  const hrs = Math.floor(totalStudyTime / 3600);
+  const mins = Math.floor((totalStudyTime % 3600) / 60).toString().padStart(2, '0');
+  const secs = (totalStudyTime % 60).toString().padStart(2, '0');
+  document.getElementById('log-today').innerText = `${hrs}:${mins}:${secs}`;
+  drawGraph();
+}
+
+function setGraphRange(days, btn) {
+  graphDays = days;
+  document.querySelectorAll('.graph-range-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  drawGraph();
+}
+
+function resetStudyLog() {
+  if(confirm('本日の記録をリセットしますか？')) {
+    totalStudyTime = 0;
+    updateStudyLog();
+  }
+}
+
+function drawGraph() {
+  const canvas = document.getElementById('log-graph');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  // 簡易的なレスポンシブ対応
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = 130;
+  
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // ダミーデータ（今日だけリアルタイム連動）
+  const data = Array(graphDays).fill(10); 
+  data[data.length - 1] = Math.min(100, 10 + (totalStudyTime / 10)); // 今日
+
+  const padding = 20;
+  const colWidth = (canvas.width - padding * 2) / graphDays;
+  
+  // グリッド線
+  ctx.strokeStyle = 'rgba(99,102,241,0.06)';
+  ctx.lineWidth = 1;
+  for(let i=0; i<4; i++) {
+    let y = padding + (canvas.height - padding * 2) * (i / 3);
+    ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(canvas.width - padding, y); ctx.stroke();
+  }
+
+  // 棒グラフを描画
+  data.forEach((val, i) => {
+    const x = padding + i * colWidth + colWidth * 0.15;
+    const w = colWidth * 0.7;
+    const h = (val / 100) * (canvas.height - padding * 2);
+    const y = canvas.height - padding - h;
+    
+    // グラデーション
+    let grad = ctx.createLinearGradient(0, y, 0, canvas.height - padding);
+    if(i === data.length - 1) {
+      grad.addColorStop(0, '#6366F1'); grad.addColorStop(1, '#8B5CF6');
+    } else {
+      grad.addColorStop(0, '#94A3B8'); grad.addColorStop(1, '#CBD5E1');
+    }
+    
+    ctx.fillStyle = grad;
+    // 角丸の棒
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, Math.max(5, h), 4);
+    ctx.fill();
+  });
+}
+
+// 初期化
+window.onload = () => {
+  updateTimerDisplay();
+  updateSwDisplay();
+  updateStudyLog();
+  window.addEventListener('resize', drawGraph);
+};
 </script>
+
 </body>
 </html>
